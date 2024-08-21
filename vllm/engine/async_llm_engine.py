@@ -1,5 +1,6 @@
 import asyncio
 import time
+import torch
 from functools import partial
 from typing import (AsyncGenerator, Callable, Dict, Iterable, List, Mapping,
                     Optional, Set, Tuple, Type, Union)
@@ -123,6 +124,8 @@ class RequestTracker:
         self._new_requests: asyncio.Queue[Tuple[AsyncStream,
                                                 dict]] = asyncio.Queue()
         self.new_requests_event = asyncio.Event()
+        self._received_request_counter = 0
+        self._finished_request_counter = 0
 
     def __contains__(self, item):
         return item in self._request_streams
@@ -165,6 +168,12 @@ class RequestTracker:
 
         if verbose and finished:
             logger.info("Finished request %s.", request_id)
+            print(f"finished: {self._finished_request_counter}")
+        if finished:
+            self._finished_request_counter += 1
+        if self._finished_request_counter == 8:
+            print("stop profiler")
+            torch.cuda.cudart().cudaProfilerStop()
 
     def process_exception(self,
                           request_id: str,
@@ -198,6 +207,11 @@ class RequestTracker:
         if verbose:
             logger.info("Added request %s.", request_id)
 
+        self._received_request_counter += 1
+        print(f"added: {self._received_request_counter}")
+        if self._received_request_counter == 1:
+            print("start profiler")
+            torch.cuda.cudart().cudaProfilerStart()
         return stream
 
     def abort_request(self,

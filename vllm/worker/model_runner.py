@@ -1714,6 +1714,7 @@ class CUDAGraphRunner:
         **kwargs,
     ) -> torch.Tensor:
         # KV caches are fixed tensors, so we don't need to copy them.
+        torch.cuda.nvtx.range_push("CUDAGraphRunner.forward")
         del kv_caches
 
         # Copy the input tensors to the input buffers.
@@ -1739,8 +1740,10 @@ class CUDAGraphRunner:
         self.graph.replay()
         # Return the output tensor.
         if get_pp_group().is_last_rank:
+            torch.cuda.nvtx.range_pop()
             return self.output_buffers["hidden_states"]
 
+        torch.cuda.nvtx.range_pop()
         return self.output_buffers
 
     def __call__(self, *args, **kwargs):

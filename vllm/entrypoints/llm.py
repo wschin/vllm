@@ -616,8 +616,16 @@ class LLM:
         outputs: List[Union[RequestOutput, EmbeddingRequestOutput]] = []
         total_in_toks = 0
         total_out_toks = 0
+        import torch
+        torch.cuda.cudart().cudaProfilerStart()
+        step_count = 0
         while self.llm_engine.has_unfinished_requests():
+            torch.cuda.nvtx.range_push(f"step {step_count}")
             step_outputs = self.llm_engine.step()
+            torch.cuda.nvtx.range_pop()
+            step_count += 1
+            if step_count == 16:
+                torch.cuda.cudart().cudaProfilerStop()
             for output in step_outputs:
                 if output.finished:
                     outputs.append(output)

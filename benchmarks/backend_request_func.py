@@ -351,6 +351,7 @@ async def async_request_openai_chat_completions(
                             timestamp = time.perf_counter()
                             data = json.loads(chunk)
 
+                            print(data)
                             delta = data["choices"][0]["delta"]
                             if delta.get("content", None):
                                 # First token

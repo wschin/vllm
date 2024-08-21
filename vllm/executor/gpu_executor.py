@@ -71,9 +71,11 @@ class GPUExecutor(ExecutorBase):
         worker_kwargs = self._get_worker_kwargs(local_rank, rank,
                                                 distributed_init_method)
         if self.speculative_config is None:
+            print("[wechi] use worker")
             worker_kwargs.update(worker_module_name="vllm.worker.worker",
                                  worker_class_name="Worker")
         else:
+            print("[wechi] use spec_decode_worker")
             worker_kwargs.update(
                 worker_module_name="vllm.spec_decode.spec_decode_worker",
                 worker_class_name="create_spec_worker")
